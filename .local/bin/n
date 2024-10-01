@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# Upserts a notes file in $NOTES_DIR (default $HOME/Documents/notes) named the
+# current date, then starts $EDITOR (must be (neo)vim) in insert mode at the
+# end of the file with a timestamp
+#
+# Dependencies:
+#   vim/neovim
+
+NOTES_DIR="${NOTES_DIR:-$HOME/Documents/notes}"
+
+error() {
+    printf 'error: %s\n' "$1"
+    exit 1
+}
+
+[ ! -d "$NOTES_DIR" ] && error "NOTES_DIR ($NOTES_DIR) does not exist"
+
+if ! command -v vim >/dev/null 2>&1 \
+    && ! command -v nvim >/dev/null 2>&1;
+then
+    error 'dependency vim/neovim not found'
+fi
+
+d=$(date +"%Y%m%d")
+file_name="$NOTES_DIR/$d.txt"
+
+if [ ! -f "$file_name" ]; then
+    printf 'Notes for %s\n' "$d" > "$file_name"
+fi
+
+printf '\n%s\n\n' "$(date +'%r')" >> "$file_name"
+
+$EDITOR -c 'norm Go' -c 'startinsert' "$file_name"

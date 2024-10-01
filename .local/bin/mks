@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# Creates an executable shell script and opens the file with $EDITOR
+
+error() {
+    printf 'error: %s\n' "$1"
+    exit 1
+}
+
+[ -z "$1" ] && printf 'usage: %s <script-name>\n' "${0##*/}" && exit 1
+[ -f "$1" ] && error 'file already exists'
+
+if ! touch "$1" 2>/dev/null; then
+    error 'unable to create file in that location'
+fi
+
+printf '#!/bin/sh' > "$1"
+
+chmod +x "$1"
+"$EDITOR" "$1"
