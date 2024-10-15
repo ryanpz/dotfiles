@@ -1,0 +1,20 @@
+func TestFUNCTION(t *testing.T) {
+	testCases := []struct {
+		desc string
+		x    int
+		want int
+	}{
+		{
+			desc: "should pass",
+			x:    1,
+			want: 2,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			if got, err := FUNCTION(tc.x); got != tc.want || err != nil {
+				t.Errorf("expected %v, got %v, err: %v", got, tc.want, err)
+			}
+		})
+	}
+} 

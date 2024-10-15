@@ -1,0 +1,41 @@
+[font]
+size = 10.5
+
+[font.normal]
+family = 'Hack'
+style = 'Regular'
+
+[window]
+decorations = 'none'
+
+[window.dimensions]
+columns = 82
+lines = 30
+
+[colors.primary]
+background = '#000000'
+foreground = '#ffffff'
+
+[colors.cursor]
+cursor = '#cf4f4f'
+text = '#ffffff'
+
+[colors.normal]
+black = '#000000'
+red = '#ff5555'
+green = '#50fa7b'
+yellow = '#f1fa8c'
+blue = '#51b5ec'
+magenta = '#ff79c6'
+cyan = '#8be9fd'
+white = '#ffffff'
+
+[colors.bright]
+black = '#676767'
+red = '#ff6e6e'
+green = '#69ff94'
+yellow = '#ffffa5'
+blue = '#97cae6'
+magenta = '#ff92df'
+cyan = '#a4ffff'
+white = '#ffffff'
