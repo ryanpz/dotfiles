@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# Prints a file template from SKELETON_DIR (default $XDG_DATA_HOME/skeleton)
+
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+SKELETON_DIR="${SKELETON_DIR:-$XDG_DATA_HOME/skeleton}"
+
+error() {
+	printf 'error: %s\n' "$1" >&2
+	exit 1
+}
+
+usage() {
+	printf 'usage: %s <skeleton_name>\n' "${0##*/}"
+}
+
+list() {
+	for s in "$SKELETON_DIR"/*; do
+		[ -f "$s" ] || continue
+		printf '%s\n' "${s##*/}"
+	done
+}
+
+if [ ! -d "$SKELETON_DIR" ]; then
+	error "SKELETON_DIR ($SKELETON_DIR) does not exist"
+fi
+
+if [ -z "$1" ]; then
+	list
+	exit
+fi
+
+while getopts lh o; do
+	case $o in
+	l)
+		list
+		exit
+		;;
+	h)
+		usage
+		exit
+		;;
+	*) exit 1 ;;
+	esac
+done
+shift $((OPTIND - 1))
+
+if ! cat "$SKELETON_DIR/$1" 2>/dev/null; then
+	error "skeleton not found: $1"
+fi
