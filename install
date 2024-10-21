@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# Dependencies:
+#   git
+
+set -e
+
+repo='git@github.com:ryanpz/dotfiles.git'
+data_dir="${XDG_DATA_HOME:-$HOME/.local/share}"
+repo_dir="$data_dir/dotfiles"
+files_to_ignore="$HOME/README.md $HOME/LICENSE $HOME/install"
+
+if ! command -v git >/dev/null 2>&1; then
+	printf 'error: dependency git not found\n'
+	exit 1
+fi
+
+if [ -d "$repo_dir" ]; then
+	printf 'error: a dotfiles repo is already installed\n'
+	exit 1
+fi
+
+export GIT_DIR="$repo_dir"
+export GIT_WORK_TREE="$HOME"
+
+printf 'install dotfiles from %s? [y/N]: ' "$repo"
+read -r ans
+case "$ans" in
+[yY]) ;;
+*)
+	printf 'exiting without installing\n'
+	exit 0
+	;;
+esac
+
+mkdir -p "$data_dir"
+git init
+git remote add -f origin "$repo"
+git checkout -f main
+
+printf '*\n' >>"$repo_dir/info/exclude"
+printf '%s\n' "$files_to_ignore" | xargs git update-index --skip-worktree

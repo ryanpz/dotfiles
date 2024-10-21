@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# Prints colored ASCII art
+#
+# The script randomly selects an ASCII art file to print from FRIENDS_DIR
+# (default $XDG_DATA_HOME/friends). Adding `${cn}` (where 1 <= n <= 6) to a
+# file will color the proceeding characters one of six randomized colors.
+#
+# This script is an adaptation of the ASCII art print logic from
+# dylanaraps/pfetch
+
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+FRIENDS_DIR="${FRIENDS_DIR:-$XDG_DATA_HOME/friends}"
+
+error() {
+	printf 'error: %s\n' "$1" >&2
+	exit 1
+}
+
+is_empty() {
+	for _f in "$1"/*; do
+		if [ -e "$_f" ]; then
+			return 1
+		fi
+	done
+	return 0
+}
+
+if [ ! -d "$FRIENDS_DIR" ]; then
+	error "FRIENDS_DIR ($FRIENDS_DIR) does not exist"
+fi
+
+if is_empty "$FRIENDS_DIR"; then
+	error "FRIENDS_DIR ($FRIENDS_DIR) is empty"
+fi
+
+esc_c=$(printf '\033')
+
+esc() {
+	e="${esc_c}[${1}m"
+}
+
+esc_p() {
+	esc "$@"
+	printf '%s' "$e"
+}
+
+rnd() {
+	sort -R <<EOF | head -n1
+1
+2
+3
+4
+5
+6
+EOF
+}
+
+for _c in c1 c2 c3 c4 c5 c6; do
+	esc "3$(rnd)"
+	export "$_c=$e"
+done
+
+if [ -n "$1" ] && [ -f "$FRIENDS_DIR/$1" ]; then
+	ascii_file="$FRIENDS_DIR/$1"
+else
+	ascii_file=$(find "$FRIENDS_DIR" -type f | sort -R | head -1)
+fi
+
+# shellcheck disable=SC2154
+colored_ascii=$(
+	sed \
+		-e "s/\${c1}/$c1/g" \
+		-e "s/\${c2}/$c2/g" \
+		-e "s/\${c3}/$c3/g" \
+		-e "s/\${c4}/$c4/g" \
+		-e "s/\${c5}/$c5/g" \
+		-e "s/\${c6}/$c6/g" \
+		"$ascii_file"
+)
+
+esc_p 1
+printf '%s\n' "$colored_ascii"
+esc_p 0
