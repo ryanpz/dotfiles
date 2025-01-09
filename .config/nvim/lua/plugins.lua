@@ -57,11 +57,10 @@ vim.keymap.set('n', '<Leader>f', fzf.files)
 --            --
 require('nvim-treesitter.configs').setup({
   ensure_installed = {
-    'bash', 'c', 'cmake', 'comment', 'cpp', 'css', 'dockerfile', 'go',
-    'graphql', 'html', 'javascript', 'jsdoc', 'json', 'lua', 'luadoc', 'make',
-    'markdown', 'markdown_inline', 'meson', 'ninja', 'proto', 'python',
-    'query', 'regex', 'rust', 'sql', 'svelte', 'toml', 'tsx', 'typescript',
-    'vim', 'vimdoc', 'yaml', 'zig',
+    'bash', 'cmake', 'comment', 'cpp', 'css', 'dockerfile', 'go', 'graphql',
+    'html', 'javascript', 'jsdoc', 'json', 'luadoc', 'make', 'meson', 'ninja',
+    'proto', 'python', 'regex', 'rust', 'sql', 'svelte', 'toml', 'tsx',
+    'typescript', 'yaml', 'zig',
   },
   indent = {
     enable = true,
