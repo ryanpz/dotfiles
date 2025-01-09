@@ -121,16 +121,57 @@ if not vim.g.lsp_enabled then
   return
 end
 
-local lspconfig = require('lspconfig')
-
 local servers = {
-  clangd = {},
-  gopls = { settings = { format_on_save = true } },
+  clangd = {
+    cmd = { 'clangd' },
+    filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
+    root_markers = {
+      '.clangd',
+      '.clang-tidy',
+      '.clang-format',
+      'compile_commands.json',
+      'compile_flags.txt',
+      'configure.ac',
+      '.git',
+    },
+    capabilities = {
+      textDocument = {
+        completion = {
+          editsNearCursor = true,
+        },
+      },
+      offsetEncoding = { 'utf-8', 'utf-16' },
+    },
+  },
+  gopls = {
+    cmd = { 'gopls' },
+    filetypes = { 'go', 'gomod', 'gowork', 'gosum', 'gotmpl' },
+    root_dir = function(cb)
+      local root = vim.fs.root(0, { 'go.mod' })
+      if not root then
+        return cb(root)
+      end
+      local workspace_root = vim.fs.root(root, { 'go.work' })
+      if workspace_root then
+        return cb(workspace_root)
+      end
+      return cb(root)
+    end,
+    settings = { format_on_save = true },
+  },
   lua_ls = {
+    cmd = { 'lua-language-server' },
+    filetypes = { 'lua' },
+    root_dir = vim.fs.root(
+      0,
+      { '.luarc.json', '.luarc.jsonc', '.luacheckrc', '.stylua.toml', 'stylua.toml', '.git' }
+    ),
     on_init = function(client)
-      local path = client.workspace_folders[1].name
-      if vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc') then
-        return
+      if client.workspace_folders then
+        local path = client.workspace_folders[1].name
+        if vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc') then
+          return
+        end
       end
       client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
         runtime = {
@@ -145,14 +186,86 @@ local servers = {
       })
     end,
     settings = {
-      Lua = {},
+      Lua = {
+        telemetry = {
+          enable = false,
+        },
+      },
     },
   },
-  pyright = {},
-  rust_analyzer = { settings = { format_on_save = true } },
-  svelte = {},
-  ts_ls = {},
-  zls = { settings = { format_on_save = true } },
+  pyright = {
+    cmd = { 'pyright-langserver', '--stdio' },
+    filetypes = { 'python' },
+    root_markers = {
+      'pyproject.toml',
+      'setup.py',
+      'setup.cfg',
+      'requirements.txt',
+      'Pipfile',
+      'pyrightconfig.json',
+      '.git',
+    },
+    settings = {
+      python = {
+        analysis = {
+          autoSearchPaths = true,
+          useLibraryCodeForTypes = true,
+          diagnosticMode = 'openFilesOnly',
+        },
+      },
+    },
+  },
+  rust_analyzer = {
+    cmd = { 'rust-analyzer' },
+    filetypes = { 'rust' },
+    root_dir = function(cb)
+      local root = vim.fs.root(0, { 'Cargo.toml' })
+      if not root then
+        return cb(root)
+      end
+
+      local out = vim
+        .system({ 'cargo', 'metadata', '--no-deps', '--format-version', '1' }, { cwd = root })
+        :wait()
+      if out.code ~= 0 then
+        return cb(root)
+      end
+
+      local ok, result = pcall(vim.json.decode, out.stdout)
+      if ok and result.workspace_root then
+        return cb(result.workspace_root)
+      end
+
+      return cb(root)
+    end,
+    settings = {
+      format_on_save = true,
+    },
+  },
+  svelte = {
+    cmd = { 'svelteserver', '--stdio' },
+    filetypes = { 'svelte' },
+    root_markers = { 'package.json', '.git' },
+  },
+  ts_ls = {
+    init_options = { hostInfo = 'neovim' },
+    cmd = { 'typescript-language-server', '--stdio' },
+    filetypes = {
+      'javascript',
+      'javascriptreact',
+      'javascript.jsx',
+      'typescript',
+      'typescriptreact',
+      'typescript.tsx',
+    },
+    root_markers = { 'tsconfig.json', 'jsconfig.json', 'package.json', '.git' },
+  },
+  zls = {
+    cmd = { 'zls' },
+    filetypes = { 'zig', 'zir' },
+    root_markers = { 'build.zig', '.git' },
+    settings = { format_on_save = true },
+  },
 }
 
 vim.api.nvim_create_autocmd('LspAttach', {
@@ -160,7 +273,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.lsp.completion.enable(true, args.data.client_id, args.buf)
 
     local client = vim.lsp.get_client_by_id(args.data.client_id)
-    if client.supports_method('textDocument/formatting') and client.settings.format_on_save then
+    if client:supports_method('textDocument/formatting') and client.settings.format_on_save then
       vim.api.nvim_create_autocmd('BufWritePre', {
         buffer = args.buf,
         callback = function()
@@ -177,6 +290,7 @@ vim.api.nvim_create_user_command('ToggleFormatOnSave', function()
   vim.g.format_on_save_enabled = not vim.g.format_on_save_enabled
 end, {})
 
-for server, opts in pairs(servers) do
-  lspconfig[server].setup(opts)
+for server, config in pairs(servers) do
+  vim.lsp.config(server, config)
+  vim.lsp.enable(server)
 end
