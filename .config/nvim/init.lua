@@ -2,11 +2,11 @@ vim.loader.enable()
 
 vim.g.mapleader = ','
 
-vim.opt.number = true
-vim.opt.completeopt = 'menuone'
-vim.opt.wrap = false
-vim.opt.mouse = ''
-vim.opt.laststatus = 3
+vim.o.number = true
+vim.o.completeopt = 'menuone'
+vim.o.wrap = false
+vim.o.mouse = ''
+vim.o.laststatus = 3
 
 require('colorscheme')
 require('closetag').setup()

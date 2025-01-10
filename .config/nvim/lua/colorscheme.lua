@@ -226,7 +226,7 @@ local set_groups = function(p)
   end
 end
 
-vim.opt.termguicolors = true
+vim.o.termguicolors = true
 if vim.g.colors_name then
   vim.cmd.highlight('clear')
   vim.cmd.syntax('reset')
