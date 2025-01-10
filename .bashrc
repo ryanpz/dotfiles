@@ -11,4 +11,6 @@ bind -x '"\C-f":"fg"'
 
 PS1='\[\033[01m\]\W \$\[\033[00m\] '
 
+[ -f "$HOME"/.bashrc.local ]  && . "$HOME"/.bashrc.local
+
 print_friend
