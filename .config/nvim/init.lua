@@ -7,6 +7,3 @@ vim.o.completeopt = 'menuone'
 vim.o.wrap = false
 vim.o.mouse = ''
 vim.o.laststatus = 3
-
-require('colorscheme')
-require('plugins')
