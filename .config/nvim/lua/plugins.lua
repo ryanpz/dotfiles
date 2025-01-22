@@ -2,6 +2,57 @@ for _, v in ipairs({ 'lsp_enabled', 'diagnostics_enabled', 'format_on_save_enabl
   vim.g[v] = (vim.g[v] ~= false)
 end
 
+--          --
+-- Closetag --
+--          --
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('Closetag', {}),
+  pattern = {
+    'astro',
+    'html',
+    'htmlangular',
+    'htmldjango',
+    'javascript',
+    'javascriptreact',
+    'markdown',
+    'rust',
+    'svelte',
+    'templ',
+    'typescript',
+    'typescriptreact',
+    'vue',
+    'xml',
+  },
+  callback = function()
+    vim.keymap.set('i', '<', function()
+      local cursor_pos = vim.api.nvim_win_get_cursor(0)[2]
+      local line = vim.api.nvim_get_current_line()
+
+      local tag_candidate = string.match(string.sub(line, 0, cursor_pos), '%<(%w+)[^>/]*%>$')
+      if tag_candidate == nil then
+        vim.api.nvim_feedkeys('<', 'in', true)
+        return
+      end
+
+      local closing_tag_after_cursor =
+        string.match(string.sub(line, cursor_pos + 1, -1), string.format('^</%s>', tag_candidate))
+      if closing_tag_after_cursor then
+        vim.api.nvim_feedkeys('<', 'in', true)
+        return
+      end
+
+      vim.api.nvim_set_current_line(
+        string.format(
+          '%s</%s>%s',
+          string.sub(line, 0, cursor_pos),
+          tag_candidate,
+          string.sub(line, cursor_pos + 1)
+        )
+      )
+    end, { buffer = true })
+  end,
+})
+
 --              --
 -- Guess-Indent --
 --              --
@@ -57,10 +108,33 @@ vim.keymap.set('n', '<Leader>f', fzf.files)
 --            --
 require('nvim-treesitter.configs').setup({
   ensure_installed = {
-    'bash', 'cmake', 'comment', 'cpp', 'css', 'dockerfile', 'go', 'graphql',
-    'html', 'javascript', 'jsdoc', 'json', 'luadoc', 'make', 'meson', 'ninja',
-    'proto', 'python', 'regex', 'rust', 'sql', 'svelte', 'toml', 'tsx',
-    'typescript', 'yaml', 'zig',
+    'bash',
+    'cmake',
+    'comment',
+    'cpp',
+    'css',
+    'dockerfile',
+    'go',
+    'graphql',
+    'html',
+    'javascript',
+    'jsdoc',
+    'json',
+    'luadoc',
+    'make',
+    'meson',
+    'ninja',
+    'proto',
+    'python',
+    'regex',
+    'rust',
+    'sql',
+    'svelte',
+    'toml',
+    'tsx',
+    'typescript',
+    'yaml',
+    'zig',
   },
   indent = {
     enable = true,

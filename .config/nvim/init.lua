@@ -9,5 +9,4 @@ vim.o.mouse = ''
 vim.o.laststatus = 3
 
 require('colorscheme')
-require('closetag').setup()
 require('plugins')
