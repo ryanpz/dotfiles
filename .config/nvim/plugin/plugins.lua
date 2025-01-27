@@ -343,15 +343,18 @@ local servers = {
 
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
-    vim.lsp.completion.enable(true, args.data.client_id, args.buf)
+    local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
+    local buf = args.buf
 
-    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    vim.lsp.completion.enable(true, client.id, buf)
+    client.server_capabilities.semanticTokensProvider = nil
+
     if client:supports_method('textDocument/formatting') and client.settings.format_on_save then
       vim.api.nvim_create_autocmd('BufWritePre', {
-        buffer = args.buf,
+        buffer = buf,
         callback = function()
           if vim.g.format_on_save_enabled then
-            vim.lsp.buf.format({ bufnr = args.buf, id = client.id })
+            vim.lsp.buf.format({ bufnr = buf, id = client.id })
           end
         end,
       })
