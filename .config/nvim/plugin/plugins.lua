@@ -219,8 +219,8 @@ local servers = {
   gopls = {
     cmd = { 'gopls' },
     filetypes = { 'go', 'gomod', 'gowork', 'gosum', 'gotmpl' },
-    root_dir = function(cb)
-      local root = vim.fs.root(0, { 'go.mod' })
+    root_dir = function(buf, cb)
+      local root = vim.fs.root(buf, { 'go.mod' })
       if not root then
         return cb(root)
       end
@@ -291,8 +291,8 @@ local servers = {
   rust_analyzer = {
     cmd = { 'rust-analyzer' },
     filetypes = { 'rust' },
-    root_dir = function(cb)
-      local root = vim.fs.root(0, { 'Cargo.toml' })
+    root_dir = function(buf, cb)
+      local root = vim.fs.root(buf, { 'Cargo.toml' })
       if not root then
         return cb(root)
       end
