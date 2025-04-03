@@ -1,0 +1,32 @@
+app-notifications = false
+confirm-close-surface = false
+cursor-style-blink = false
+font-family = Hack
+font-size = 10.5
+resize-overlay = never
+shell-integration-features = no-cursor
+window-decoration = false
+
+palette = 0=#222222
+palette = 1=#ff5555
+palette = 2=#50fa7b
+palette = 3=#f1fa8c
+palette = 4=#4cc0ff
+palette = 5=#ff79c6
+palette = 6=#8be9fd
+palette = 7=#ffffff
+palette = 8=#626262
+palette = 9=#ff6e6e
+palette = 10=#69ff94
+palette = 11=#ffffa5
+palette = 12=#68caff
+palette = 13=#ff92df
+palette = 14=#a4ffff
+palette = 15=#ffffff
+background = 000000
+foreground = ffffff
+cursor-color = ff5555
+cursor-text = ffffff
+selection-invert-fg-bg = true
+
+config-file = ?config.local
