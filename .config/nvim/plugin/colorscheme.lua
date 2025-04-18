@@ -273,6 +273,9 @@ set_groups(palette)
 vim.api.nvim_create_autocmd('BufEnter', {
   pattern = '*',
   callback = function()
+    if vim.bo.buftype ~= '' then
+      return
+    end
     vim.cmd.match('ColorColumn /\\%>79v.*\\%<81v/')
   end,
 })
