@@ -136,7 +136,7 @@ post_update() {
 
 plug tpope/vim-fugitive              # git integration
 plug NMAC427/guess-indent.nvim       # indent style detection
-plug ibhagwan/fzf-lua                # fuzzy-search file navigation
+plug junegunn/fzf                    # fuzzy-search file navigation
 plug nvim-treesitter/nvim-treesitter # treesitter configs
 
 packup "$@"

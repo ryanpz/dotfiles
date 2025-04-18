@@ -78,30 +78,19 @@ end)
 --     --
 -- Fzf --
 --     --
-local fzf = require('fzf-lua')
 vim.fn.setenv('ESCDELAY', '0')
+local spec = {
+  options = { '--keep-right', '--scheme', 'path' },
+  sink = 'e' ,
+  window = { width = 0.4, height = 0.4 },
+}
+local spec_git = vim.deepcopy(spec)
+spec_git.source = 'git ls-files'
 
-fzf.setup({
-  files = {
-    previewer = false,
-    actions = {
-      ['ctrl-g'] = false,
-    },
-  },
-  winopts = {
-    height = 0.4,
-    width = 0.4,
-    row = 0.5,
-    col = 0.5,
-  },
-  fzf_opts = {
-    ['--keep-right'] = '',
-    ['--no-separator'] = '',
-  },
-  fzf_colors = true,
-})
-
-vim.keymap.set('n', '<Leader>f', fzf.files)
+vim.keymap.set('n', '<Leader>f', function()
+  local obj = vim.system({'git', 'rev-parse'}):wait()
+  vim.fn['fzf#run'](obj.code == 0 and spec_git or spec)
+end)
 
 --            --
 -- Treesitter --
