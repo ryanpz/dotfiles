@@ -79,17 +79,17 @@ end)
 -- Fzf --
 --     --
 vim.fn.setenv('ESCDELAY', '0')
-local spec = {
+local fzf_spec = {
   options = { '--keep-right', '--scheme', 'path' },
-  sink = 'e' ,
+  sink = 'e',
   window = { width = 0.4, height = 0.4 },
 }
-local spec_git = vim.deepcopy(spec)
-spec_git.source = 'git ls-files'
+local fzf_spec_git = vim.deepcopy(fzf_spec)
+fzf_spec_git.source = 'git ls-files'
 
 vim.keymap.set('n', '<Leader>f', function()
-  local obj = vim.system({'git', 'rev-parse'}):wait()
-  vim.fn['fzf#run'](obj.code == 0 and spec_git or spec)
+  local out = vim.system({ 'git', 'rev-parse' }):wait()
+  vim.fn['fzf#run'](out.code == 0 and fzf_spec_git or fzf_spec)
 end)
 
 --            --
@@ -188,13 +188,15 @@ local servers = {
     cmd = { 'clangd' },
     filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
     root_markers = {
-      '.clangd',
-      '.clang-tidy',
-      '.clang-format',
-      'compile_commands.json',
-      'compile_flags.txt',
-      'configure.ac',
-      '.git',
+      {
+        '.clangd',
+        '.clang-tidy',
+        '.clang-format',
+        'compile_commands.json',
+        'compile_flags.txt',
+        'configure.ac',
+        '.git',
+      },
     },
     capabilities = {
       textDocument = {
@@ -208,26 +210,26 @@ local servers = {
   gopls = {
     cmd = { 'gopls' },
     filetypes = { 'go', 'gomod', 'gowork', 'gosum', 'gotmpl' },
-    root_dir = function(buf, cb)
-      local root = vim.fs.root(buf, { 'go.mod' })
-      if not root then
-        return cb(root)
+    root_dir = function(buf, on_dir)
+      local cwd = vim.fs.dirname(vim.api.nvim_buf_get_name(buf))
+      local out = vim.system({ 'go', 'env', '-json', 'GOMOD' }, { cwd = cwd }):wait()
+      if out.code ~= 0 then
+        return
       end
-      local workspace_root = vim.fs.root(root, { 'go.work' })
-      if workspace_root then
-        return cb(workspace_root)
+
+      local ok, result = pcall(vim.json.decode, out.stdout)
+      if ok and result.GOMOD ~= '/dev/null' then
+        on_dir(vim.fs.dirname(result.GOMOD))
       end
-      return cb(root)
     end,
     settings = { format_on_save = true },
   },
   lua_ls = {
     cmd = { 'lua-language-server' },
     filetypes = { 'lua' },
-    root_dir = vim.fs.root(
-      0,
-      { '.luarc.json', '.luarc.jsonc', '.luacheckrc', '.stylua.toml', 'stylua.toml', '.git' }
-    ),
+    root_markers = {
+      { '.luarc.json', '.luarc.jsonc', '.luacheckrc', '.stylua.toml', 'stylua.toml', '.git' },
+    },
     on_init = function(client)
       if client.workspace_folders then
         local path = client.workspace_folders[1].name
@@ -259,13 +261,15 @@ local servers = {
     cmd = { 'pyright-langserver', '--stdio' },
     filetypes = { 'python' },
     root_markers = {
-      'pyproject.toml',
-      'setup.py',
-      'setup.cfg',
-      'requirements.txt',
-      'Pipfile',
-      'pyrightconfig.json',
-      '.git',
+      {
+        'pyproject.toml',
+        'setup.py',
+        'setup.cfg',
+        'requirements.txt',
+        'Pipfile',
+        'pyrightconfig.json',
+        '.git',
+      },
     },
     settings = {
       python = {
@@ -280,34 +284,26 @@ local servers = {
   rust_analyzer = {
     cmd = { 'rust-analyzer' },
     filetypes = { 'rust' },
-    root_dir = function(buf, cb)
-      local root = vim.fs.root(buf, { 'Cargo.toml' })
-      if not root then
-        return cb(root)
-      end
-
+    root_dir = function(buf, on_dir)
+      local cwd = vim.fs.dirname(vim.api.nvim_buf_get_name(buf))
       local out = vim
-        .system({ 'cargo', 'metadata', '--no-deps', '--format-version', '1' }, { cwd = root })
+        .system({ 'cargo', 'metadata', '--no-deps', '--format-version', '1' }, { cwd = cwd })
         :wait()
       if out.code ~= 0 then
-        return cb(root)
+        return
       end
 
       local ok, result = pcall(vim.json.decode, out.stdout)
       if ok and result.workspace_root then
-        return cb(result.workspace_root)
+        on_dir(result.workspace_root)
       end
-
-      return cb(root)
     end,
-    settings = {
-      format_on_save = true,
-    },
+    settings = { format_on_save = true },
   },
   svelte = {
     cmd = { 'svelteserver', '--stdio' },
     filetypes = { 'svelte' },
-    root_markers = { 'package.json', '.git' },
+    root_markers = { { 'package.json', '.git' } },
   },
   ts_ls = {
     init_options = { hostInfo = 'neovim' },
@@ -320,12 +316,12 @@ local servers = {
       'typescriptreact',
       'typescript.tsx',
     },
-    root_markers = { 'tsconfig.json', 'jsconfig.json', 'package.json', '.git' },
+    root_markers = { { 'tsconfig.json', 'jsconfig.json', 'package.json', '.git' } },
   },
   zls = {
     cmd = { 'zls' },
     filetypes = { 'zig', 'zir' },
-    root_markers = { 'build.zig', '.git' },
+    root_markers = { { 'build.zig', '.git' } },
     settings = { format_on_save = true },
   },
 }
