@@ -138,17 +138,9 @@ require('nvim-treesitter.configs').setup({
 -- Diagnostics --
 --             --
 vim.diagnostic.config({
-  virtual_text = false,
   underline = false,
-  jump = { float = true },
   signs = {
     text = {
-      [vim.diagnostic.severity.ERROR] = '',
-      [vim.diagnostic.severity.WARN] = '',
-      [vim.diagnostic.severity.INFO] = '',
-      [vim.diagnostic.severity.HINT] = '',
-    },
-    linehl = {
       [vim.diagnostic.severity.ERROR] = '',
       [vim.diagnostic.severity.WARN] = '',
       [vim.diagnostic.severity.INFO] = '',
@@ -160,12 +152,15 @@ vim.diagnostic.config({
       [vim.diagnostic.severity.INFO] = 'DiagnosticSignInfo',
       [vim.diagnostic.severity.HINT] = 'DiagnosticSignHint',
     },
-    texthl = {
-      [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
-      [vim.diagnostic.severity.WARN] = 'DiagnosticSignWarn',
-      [vim.diagnostic.severity.INFO] = 'DiagnosticSignInfo',
-      [vim.diagnostic.severity.HINT] = 'DiagnosticSignHint',
-    },
+  },
+  jump = {
+    on_jump = function(_, bufnr)
+      vim.diagnostic.open_float({
+        bufnr = bufnr,
+        scope = 'cursor',
+        focus = false,
+      })
+    end,
   },
 })
 
