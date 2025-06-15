@@ -79,17 +79,47 @@ end)
 -- Fzf --
 --     --
 vim.fn.setenv('ESCDELAY', '0')
-local fzf_spec = {
-  options = { '--keep-right', '--scheme', 'path' },
-  sink = 'e',
-  window = { width = 0.4, height = 0.4 },
-}
-local fzf_spec_git = vim.deepcopy(fzf_spec)
-fzf_spec_git.source = 'git ls-files'
-
 vim.keymap.set('n', '<Leader>f', function()
-  local out = vim.system({ 'git', 'rev-parse' }):wait()
-  vim.fn['fzf#run'](out.code == 0 and fzf_spec_git or fzf_spec)
+  local buf = vim.api.nvim_create_buf(false, true)
+  local win_width = math.floor(vim.o.columns * 0.4)
+  local win_height = math.floor(vim.o.lines * 0.4)
+  local win_id = vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = win_width - 2,
+    height = win_height - 2,
+    row = math.floor((vim.o.lines - win_height) / 2),
+    col = math.floor((vim.o.columns - win_width) / 2),
+    style = 'minimal',
+    border = 'rounded',
+  })
+  vim.wo[win_id].winhighlight = 'Pmenu:,Normal:Normal'
+
+  local fzf_cmd = 'fzf --keep-right --scheme path --no-height'
+  local in_git_repo = vim.system({ 'git', 'rev-parse' }):wait()
+  if in_git_repo.code == 0 then
+    fzf_cmd = 'git ls-files | ' .. fzf_cmd
+  end
+  local tmpfile = vim.fn.tempname()
+  vim.fn.jobstart(fzf_cmd .. ' > ' .. tmpfile, {
+    term = true,
+    on_exit = function(_, code, _)
+      vim.cmd.bdelete(buf)
+      if code ~= 0 then
+        vim.fn.delete(tmpfile)
+        return
+      end
+
+      local fd = io.open(tmpfile, 'r')
+      if fd then
+        local selected = fd:read()
+        fd:close()
+        vim.cmd.edit(selected)
+      end
+
+      vim.fn.delete(tmpfile)
+    end,
+  })
+  vim.cmd.startinsert()
 end)
 
 --            --

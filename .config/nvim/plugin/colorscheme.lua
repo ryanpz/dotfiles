@@ -65,7 +65,7 @@ local set_groups = function(p)
     NonText = { fg = p.nontext },
     Normal = { fg = p.fg, bg = p.bg },
     NormalFloat = { fg = p.fg, bg = p.menu_alt },
-    FloatBorder = { link = 'Normal' },
+    FloatBorder = { link = 'WinSeparator' },
     FloatTitle = { link = 'Title' },
     FloatFooter = { link = 'FloatTitle' },
     NormalNC = { link = 'Normal' },
