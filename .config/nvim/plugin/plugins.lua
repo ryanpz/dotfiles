@@ -238,7 +238,7 @@ local servers = {
     root_dir = function(buf, on_dir)
       local cwd = vim.fs.dirname(vim.api.nvim_buf_get_name(buf))
       local out = vim.system({ 'go', 'env', '-json', 'GOMOD' }, { cwd = cwd }):wait()
-      if out.code ~= 0 then
+      if out.code ~= 0 or not out.stdout then
         return
       end
 
@@ -249,38 +249,10 @@ local servers = {
     end,
     settings = { format_on_save = true },
   },
-  lua_ls = {
-    cmd = { 'lua-language-server' },
+  emmylua_ls = {
+    cmd = { 'emmylua_ls' },
     filetypes = { 'lua' },
-    root_markers = {
-      { '.luarc.json', '.luarc.jsonc', '.luacheckrc', '.stylua.toml', 'stylua.toml', '.git' },
-    },
-    on_init = function(client)
-      if client.workspace_folders then
-        local path = client.workspace_folders[1].name
-        if vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc') then
-          return
-        end
-      end
-      client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
-        runtime = {
-          version = 'LuaJIT',
-        },
-        workspace = {
-          checkThirdParty = false,
-          library = {
-            vim.env.VIMRUNTIME,
-          },
-        },
-      })
-    end,
-    settings = {
-      Lua = {
-        telemetry = {
-          enable = false,
-        },
-      },
-    },
+    root_markers = { { '.luarc.json', '.emmyrc.json', '.stylua.toml', 'stylua.toml', '.git' } },
   },
   pyright = {
     cmd = { 'pyright-langserver', '--stdio' },
@@ -314,7 +286,7 @@ local servers = {
       local out = vim
         .system({ 'cargo', 'metadata', '--no-deps', '--format-version', '1' }, { cwd = cwd })
         :wait()
-      if out.code ~= 0 then
+      if out.code ~= 0 or not out.stdout then
         return
       end
 
@@ -357,7 +329,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
     local buf = args.buf
 
     vim.lsp.completion.enable(true, client.id, buf)
-    client.server_capabilities.semanticTokensProvider = nil
+    if client.server_capabilities then
+      client.server_capabilities.semanticTokensProvider = nil
+    end
 
     if client:supports_method('textDocument/formatting') and client.settings.format_on_save then
       vim.api.nvim_create_autocmd('BufWritePre', {
