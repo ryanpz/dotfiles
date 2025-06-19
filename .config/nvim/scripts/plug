@@ -131,12 +131,12 @@ update_plugin() {
 
 post_update() {
 	printf 'Running post-update steps\n'
-	nvim +'helptags ALL' +TSUpdate
+	nvim +'helptags ALL' +TSUpdate +TSInit
 }
 
-plug tpope/vim-fugitive              # git integration
-plug NMAC427/guess-indent.nvim       # indent style detection
-plug nvim-treesitter/nvim-treesitter # treesitter configs
+plug tpope/vim-fugitive                         # git integration
+plug NMAC427/guess-indent.nvim                  # indent style detection
+plug nvim-treesitter/nvim-treesitter start main # treesitter configs
 
 packup "$@"
 post_update

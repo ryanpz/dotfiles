@@ -125,8 +125,8 @@ end)
 --            --
 -- Treesitter --
 --            --
-require('nvim-treesitter.configs').setup({
-  ensure_installed = {
+vim.api.nvim_create_user_command('TSInit', function()
+  require('nvim-treesitter').install({
     'bash',
     'cmake',
     'comment',
@@ -154,14 +154,21 @@ require('nvim-treesitter.configs').setup({
     'typescript',
     'yaml',
     'zig',
-  },
-  indent = {
-    enable = true,
-    disable = { 'python', 'c', 'cpp' },
-  },
-  highlight = {
-    enable = true,
-  },
+  })
+end, {})
+
+vim.api.nvim_create_autocmd('FileType', {
+  callback = function(args)
+    local buf = args.buf
+    local lang = vim.treesitter.language.get_lang(vim.bo[buf].filetype)
+
+    if not pcall(vim.treesitter.start, buf, lang) then
+      return
+    end
+    if vim.treesitter.query.get(lang, 'indents') then
+      vim.bo[buf].indentexpr = "v:lua.require('nvim-treesitter').indentexpr()"
+    end
+  end,
 })
 
 --             --
