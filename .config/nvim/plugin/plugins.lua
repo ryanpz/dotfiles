@@ -53,28 +53,6 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
---              --
--- Guess-Indent --
---              --
-require('guess-indent').setup()
-
---          --
--- Fugitive --
---          --
-vim.keymap.set('n', '<Leader>g', function()
-  if vim.fn.FugitiveGitDir() == '' then
-    return
-  end
-
-  local buf = vim.fn.bufnr('^fugitive://*')
-  if vim.fn.buflisted(buf) ~= 0 then
-    vim.cmd.bdelete(buf)
-    return
-  end
-
-  vim.cmd.Git()
-end)
-
 --     --
 -- Fzf --
 --     --

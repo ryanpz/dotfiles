@@ -135,7 +135,6 @@ post_update() {
 }
 
 plug tpope/vim-fugitive                         # git integration
-plug NMAC427/guess-indent.nvim                  # indent style detection
 plug nvim-treesitter/nvim-treesitter start main # treesitter configs
 
 packup "$@"
