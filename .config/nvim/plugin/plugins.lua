@@ -2,61 +2,9 @@ for _, v in ipairs({ 'lsp_enabled', 'diagnostics_enabled', 'format_on_save_enabl
   vim.g[v] = (vim.g[v] ~= false)
 end
 
---          --
--- Closetag --
---          --
-vim.api.nvim_create_autocmd('FileType', {
-  group = vim.api.nvim_create_augroup('Closetag', {}),
-  pattern = {
-    'astro',
-    'html',
-    'htmlangular',
-    'htmldjango',
-    'javascript',
-    'javascriptreact',
-    'markdown',
-    'rust',
-    'svelte',
-    'templ',
-    'typescript',
-    'typescriptreact',
-    'vue',
-    'xml',
-  },
-  callback = function()
-    vim.keymap.set('i', '<', function()
-      local cursor_pos = vim.api.nvim_win_get_cursor(0)[2]
-      local line = vim.api.nvim_get_current_line()
-
-      local tag_candidate = string.match(string.sub(line, 0, cursor_pos), '%<(%w+)[^>/]*%>$')
-      if tag_candidate == nil then
-        vim.api.nvim_feedkeys('<', 'in', true)
-        return
-      end
-
-      local closing_tag_after_cursor =
-        string.match(string.sub(line, cursor_pos + 1, -1), string.format('^</%s>', tag_candidate))
-      if closing_tag_after_cursor then
-        vim.api.nvim_feedkeys('<', 'in', true)
-        return
-      end
-
-      vim.api.nvim_set_current_line(
-        string.format(
-          '%s</%s>%s',
-          string.sub(line, 0, cursor_pos),
-          tag_candidate,
-          string.sub(line, cursor_pos + 1)
-        )
-      )
-    end, { buffer = true })
-  end,
-})
-
 --     --
 -- Fzf --
 --     --
-vim.fn.setenv('ESCDELAY', '0')
 vim.keymap.set('n', '<Leader>f', function()
   local buf = vim.api.nvim_create_buf(false, true)
   local win_width = math.floor(vim.o.columns * 0.4)
@@ -79,6 +27,7 @@ vim.keymap.set('n', '<Leader>f', function()
   end
   local tmpfile = vim.fn.tempname()
   vim.fn.jobstart(fzf_cmd .. ' > ' .. tmpfile, {
+    env = { ESCDELAY = 0 },
     term = true,
     on_exit = function(_, code, _)
       vim.cmd.bdelete(buf)
@@ -100,52 +49,14 @@ vim.keymap.set('n', '<Leader>f', function()
   vim.cmd.startinsert()
 end)
 
---            --
--- Treesitter --
---            --
-vim.api.nvim_create_user_command('TSInit', function()
-  require('nvim-treesitter').install({
-    'bash',
-    'cmake',
-    'comment',
-    'cpp',
-    'css',
-    'dockerfile',
-    'go',
-    'graphql',
-    'html',
-    'javascript',
-    'jsdoc',
-    'json',
-    'luadoc',
-    'make',
-    'meson',
-    'ninja',
-    'proto',
-    'python',
-    'regex',
-    'rust',
-    'sql',
-    'svelte',
-    'toml',
-    'tsx',
-    'typescript',
-    'yaml',
-    'zig',
-  })
-end, {})
-
+--           --
+-- Filetypes --
+--           --
 vim.api.nvim_create_autocmd('FileType', {
-  callback = function(args)
-    local buf = args.buf
-    local lang = vim.treesitter.language.get_lang(vim.bo[buf].filetype)
-
-    if not pcall(vim.treesitter.start, buf, lang) then
-      return
-    end
-    if vim.treesitter.query.get(lang, 'indents') then
-      vim.bo[buf].indentexpr = "v:lua.require('nvim-treesitter').indentexpr()"
-    end
+  pattern = { 'svelte' },
+  callback = function()
+    vim.cmd.runtime({ 'syntax/astro.vim', bang = true })
+    vim.cmd.runtime({ 'indent/html.vim', bang = true })
   end,
 })
 

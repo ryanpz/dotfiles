@@ -50,6 +50,5 @@ packup() {
 }
 
 plug github.com/tpope/vim-fugitive
-plug github.com/nvim-treesitter/nvim-treesitter main
 
 packup
