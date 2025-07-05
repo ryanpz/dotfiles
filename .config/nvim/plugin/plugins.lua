@@ -2,6 +2,19 @@ for _, v in ipairs({ 'lsp_enabled', 'diagnostics_enabled', 'format_on_save_enabl
   vim.g[v] = (vim.g[v] ~= false)
 end
 
+vim.pack.add({
+  'https://github.com/tpope/vim-fugitive',
+  { src = 'https://github.com/nvim-treesitter/nvim-treesitter', version = 'main' },
+})
+
+vim.api.nvim_create_autocmd('PackChanged', {
+  callback = function(args)
+    if args.data.spec.name == 'nvim-treesitter' and args.data.kind == 'update' then
+      vim.cmd.TSUpdate()
+    end
+  end,
+})
+
 --          --
 -- Closetag --
 --          --
