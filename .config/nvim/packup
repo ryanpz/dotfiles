@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# Installs, updates and uninstalls Neovim plugins
+# Adapted from gpanders/dotfiles
+
+set -euf
+
+packpath="${XDG_DATA_HOME:-$HOME/.local/share}/nvim/site/pack/plugins"
+
+plugins=""
+
+plug() {
+	url="https://$1"
+	name=${url##*/}
+	path="$packpath/start/$name"
+	plugins="$plugins $path"
+
+	(
+		if [ -d "$path" ]; then
+			git -C "$path" fetch --quiet
+		else
+			printf 'Cloning %s\n' "$name"
+			git clone -q --recurse-submodules --shallow-submodules --depth=1 ${2:+--branch "$2"} "$url" "$path"
+		fi
+	) &
+}
+
+packup() {
+	wait
+
+	tmp=$(mktemp)
+	trap 'rm -f $tmp' EXIT
+	printf '%s\n' "$plugins" >"$tmp"
+	installed="$(find "$packpath" -mindepth 2 -maxdepth 2 -type d)"
+
+	for path in $installed; do
+		name=${path##*/}
+		if ! grep -qF "$path" "$tmp"; then
+			printf 'Removing %s\n' "$name"
+			rm -rf "$path"
+			continue
+		fi
+
+		count="$(git -C "$path" rev-list --count 'HEAD...@{u}')"
+		if [ "$count" -gt 0 ]; then
+			printf 'Updating %s\n' "$name"
+			git -C "$path" merge --ff-only '@{u}'
+		fi
+	done
+}
+
+plug github.com/tpope/vim-fugitive
+plug github.com/nvim-treesitter/nvim-treesitter main
+
+packup
