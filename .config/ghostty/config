@@ -6,16 +6,17 @@ font-size = 10.5
 resize-overlay = never
 shell-integration-features = no-cursor
 window-decoration = false
+adjust-cursor-thickness = 2
 
 palette = 0=#222222
-palette = 1=#ff5555
-palette = 2=#50fa7b
-palette = 3=#f1fa8c
-palette = 4=#4cc0ff
-palette = 5=#ff79c6
-palette = 6=#8be9fd
+palette = 1=#ff938f
+palette = 2=#c0ffe3
+palette = 3=#ffffbe
+palette = 4=#c0e9ff
+palette = 5=#ffcbf4
+palette = 6=#c0fcff
 palette = 7=#ffffff
-palette = 8=#626262
+palette = 8=#909090
 palette = 9=#ff6e6e
 palette = 10=#69ff94
 palette = 11=#ffffa5
