@@ -2,52 +2,46 @@ for _, v in ipairs({ 'lsp_enabled', 'diagnostics_enabled', 'format_on_save_enabl
   vim.g[v] = (vim.g[v] ~= false)
 end
 
---     --
--- Fzf --
---     --
-vim.keymap.set('n', '<Leader>f', function()
-  local buf = vim.api.nvim_create_buf(false, true)
-  local win_width = math.floor(vim.o.columns * 0.4)
-  local win_height = math.floor(vim.o.lines * 0.4)
-  local win_id = vim.api.nvim_open_win(buf, true, {
-    relative = 'editor',
-    width = win_width - 2,
-    height = win_height - 2,
-    row = math.floor((vim.o.lines - win_height) / 2),
-    col = math.floor((vim.o.columns - win_width) / 2),
-    style = 'minimal',
-    border = 'rounded',
-  })
-  vim.wo[win_id].winhighlight = 'Pmenu:,Normal:Normal'
+--              --
+-- Fuzzy Finder --
+--              --
+local project_files = function()
+  local files = {}
 
-  local fzf_cmd = 'fzf --keep-right --scheme path --no-height'
-  local in_git_repo = vim.system({ 'git', 'rev-parse' }):wait()
-  if in_git_repo.code == 0 then
-    fzf_cmd = 'git ls-files | ' .. fzf_cmd
+  local out = vim.system({ 'git', 'ls-files' }):wait()
+  if out.code ~= 0 then
+    out = vim.system({ 'find', '.', '-type', 'f' }):wait()
   end
-  local tmpfile = vim.fn.tempname()
-  vim.fn.jobstart(fzf_cmd .. ' > ' .. tmpfile, {
-    env = { ESCDELAY = 0 },
-    term = true,
-    on_exit = function(_, code, _)
-      vim.cmd.bdelete(buf)
-      if code ~= 0 then
-        vim.fn.delete(tmpfile)
-        return
-      end
+  if out.stdout then
+    files = vim.split(out.stdout, '\n')
+  end
 
-      local fd = io.open(tmpfile, 'r')
-      if fd then
-        local selected = fd:read()
-        fd:close()
-        vim.cmd.edit(selected)
-      end
+  return files
+end
 
-      vim.fn.delete(tmpfile)
-    end,
-  })
-  vim.cmd.startinsert()
-end)
+vim.api.nvim_create_user_command('F', function(opts)
+  local file = ''
+  if vim.uv.fs_stat(opts.args) then
+    file = opts.args
+  else
+    file = vim.fn.matchfuzzy(project_files(), opts.args)[1] or ''
+  end
+
+  if file == '' then
+    print('No matches')
+    return
+  end
+
+  vim.cmd.edit(file)
+end, {
+  nargs = 1,
+  complete = function(arg_lead)
+    if arg_lead == '' then
+      return {}
+    end
+    return vim.fn.matchfuzzy(project_files(), arg_lead)
+  end,
+})
 
 --           --
 -- Filetypes --
