@@ -210,6 +210,20 @@ local servers = {
       'typescript.tsx',
     },
     root_markers = { { 'tsconfig.json', 'jsconfig.json', 'package.json', '.git' } },
+    settings = { format_on_save = true },
+    on_init = function(client)
+      if not client.settings.format_on_save then
+        return
+      end
+
+      local has_prettier_config = #vim.fn.glob(client.root_dir .. '/.prettierrc*', true, true) > 0
+      if not has_prettier_config then
+        client.settings.format_on_save = false
+        return
+      end
+
+      client.settings.use_prettier = true
+    end,
   },
   zls = {
     cmd = { 'zls' },
@@ -218,6 +232,19 @@ local servers = {
     settings = { format_on_save = true },
   },
 }
+
+local function prettier_fmt(buf)
+  local file = vim.api.nvim_buf_get_name(buf)
+  vim.system({ 'npx', 'prettier', '--write', file }, {}, function(out)
+    if out.code ~= 0 then
+      print('Error formatting with prettier')
+      return
+    end
+    vim.schedule(function()
+      vim.cmd.checktime(buf)
+    end)
+  end)
+end
 
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
@@ -233,9 +260,15 @@ vim.api.nvim_create_autocmd('LspAttach', {
       vim.api.nvim_create_autocmd('BufWritePre', {
         buffer = buf,
         callback = function()
-          if vim.g.format_on_save_enabled then
-            vim.lsp.buf.format({ bufnr = buf, id = client.id })
+          if not vim.g.format_on_save_enabled then
+            return
           end
+
+          if client.settings.use_prettier then
+            prettier_fmt(buf)
+            return
+          end
+          vim.lsp.buf.format({ bufnr = buf, id = client.id })
         end,
       })
     end
