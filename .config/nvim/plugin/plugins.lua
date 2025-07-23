@@ -196,6 +196,7 @@ local servers = {
     cmd = { 'svelteserver', '--stdio' },
     filetypes = { 'svelte' },
     root_markers = { { 'package.json', '.git' } },
+    settings = { format_on_save = true },
   },
   ts_ls = {
     init_options = { hostInfo = 'neovim' },
