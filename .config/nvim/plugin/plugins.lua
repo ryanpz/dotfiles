@@ -8,12 +8,17 @@ end
 local project_files = function()
   local files = {}
 
-  local out = vim.system({ 'git', 'ls-files' }):wait()
-  if out.code ~= 0 then
-    out = vim.system({ 'find', '.', '-type', 'f' }):wait()
-  end
-  if out.stdout then
-    files = vim.split(out.stdout, '\n')
+  local cmds = {
+    { 'git', 'ls-files', '--cached', '--others', '--exclude-standard' },
+    { 'jj', 'file', 'list' },
+    { 'find', '.', '-type', 'f' },
+  }
+  for _, cmd in ipairs(cmds) do
+    local out = vim.system(cmd):wait()
+    if out.code == 0 and out.stdout then
+      files = vim.split(out.stdout, '\n')
+      break
+    end
   end
 
   return files
