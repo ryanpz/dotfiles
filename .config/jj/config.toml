@@ -1,0 +1,7 @@
+[ui]
+default-command = "log"
+
+[aliases]
+push = ["git", "push"]
+fetch = ["git", "fetch"]
+tug = ["bookmark", "move", "--from", "heads(::@- & bookmarks())", "--to", "@-"]
