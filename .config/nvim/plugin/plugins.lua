@@ -2,6 +2,15 @@ for _, v in ipairs({ 'lsp_enabled', 'diagnostics_enabled', 'format_on_save_enabl
   vim.g[v] = (vim.g[v] ~= false)
 end
 
+vim.api.nvim_create_user_command('ToggleDiagnostics', function()
+  vim.g.diagnostics_enabled = not vim.g.diagnostics_enabled
+  vim.diagnostic.enable(vim.g.diagnostics_enabled)
+end, {})
+
+vim.api.nvim_create_user_command('ToggleFormatOnSave', function()
+  vim.g.format_on_save_enabled = not vim.g.format_on_save_enabled
+end, {})
+
 --              --
 -- Fuzzy Finder --
 --              --
@@ -66,6 +75,101 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+--            --
+-- Formatters --
+--            --
+local formatters = {
+  prettier = {
+    filetypes = { 'typescript', 'javascript' },
+    executable = 'npx',
+    cmd = function(config_file, file)
+      return { 'npx', 'prettier', '--config', config_file, '--write', file }
+    end,
+    config_finder = function(buf, callback)
+      vim.system(
+        { 'npx', 'prettier', '--find-config-path', vim.api.nvim_buf_get_name(buf) },
+        { timeout = 2000 },
+        function(out)
+          local config = nil
+          if out.code == 0 and out.stdout then
+            config = vim.trim(out.stdout)
+          end
+          callback(config)
+        end
+      )
+    end,
+  },
+  stylua = {
+    filetypes = { 'lua' },
+    executable = 'stylua',
+    cmd = function(config_file, file)
+      return { 'stylua', '--config-path', config_file, file }
+    end,
+    config_finder = function(buf, callback)
+      local config = vim.fs.find(
+        { 'stylua.toml', '.stylua.toml' },
+        { upward = true, path = vim.fs.dirname(vim.api.nvim_buf_get_name(buf)) }
+      )[1]
+      callback(config)
+    end,
+  },
+}
+
+local function setup_format_on_save(name, opts)
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = opts.filetypes,
+    callback = function(args)
+      if vim.fn.executable(opts.executable) == 0 then
+        print(string.format('Format setup failed (%s): %s not found', name, opts.executable))
+        return
+      end
+
+      local buf = args.buf
+      local file = vim.api.nvim_buf_get_name(buf)
+
+      opts.config_finder(buf, function(config)
+        vim.b[buf].format_config = config
+      end)
+
+      local function fmt()
+        vim.b[buf].formatting = true
+
+        local cmd = opts.cmd(vim.b[buf].format_config, file)
+        vim.system(cmd, { timeout = opts.timeout or 5000 }, function(out)
+          vim.b[buf].formatting = false
+          if out.code ~= 0 then
+            local error_msg = out.code == 124 and 'Timeout' or out.stderr or 'Unknown error'
+            print(string.format('Format failed (%s): %s', name, error_msg))
+            return
+          end
+          vim.schedule(function()
+            if vim.api.nvim_buf_is_valid(buf) then
+              vim.cmd.checktime(buf)
+            end
+          end)
+        end)
+      end
+
+      vim.api.nvim_create_autocmd('BufWritePost', {
+        buffer = buf,
+        callback = function()
+          if
+            vim.g.format_on_save_enabled
+            and vim.b[buf].format_config
+            and not vim.b[buf].formatting
+          then
+            fmt()
+          end
+        end,
+      })
+    end,
+  })
+end
+
+for name, opts in pairs(formatters) do
+  setup_format_on_save(name, opts)
+end
+
 --             --
 -- Diagnostics --
 --             --
@@ -97,11 +201,6 @@ vim.diagnostic.config({
 })
 
 vim.diagnostic.enable(vim.g.diagnostics_enabled)
-
-vim.api.nvim_create_user_command('ToggleDiagnostics', function()
-  vim.g.diagnostics_enabled = not vim.g.diagnostics_enabled
-  vim.diagnostic.enable(vim.g.diagnostics_enabled)
-end, {})
 
 --     --
 -- LSP --
@@ -217,20 +316,6 @@ local servers = {
       'typescript.tsx',
     },
     root_markers = { { 'tsconfig.json', 'jsconfig.json', 'package.json', '.git' } },
-    settings = { format_on_save = true },
-    on_init = function(client)
-      if not client.settings.format_on_save then
-        return
-      end
-
-      local has_prettier_config = #vim.fn.glob(client.root_dir .. '/.prettierrc*', true, true) > 0
-      if not has_prettier_config then
-        client.settings.format_on_save = false
-        return
-      end
-
-      client.settings.use_prettier = true
-    end,
   },
   zls = {
     cmd = { 'zls' },
@@ -240,18 +325,7 @@ local servers = {
   },
 }
 
-local function prettier_fmt(buf)
-  local file = vim.api.nvim_buf_get_name(buf)
-  vim.system({ 'npx', 'prettier', '--write', file }, {}, function(out)
-    if out.code ~= 0 then
-      print('Error formatting with prettier')
-      return
-    end
-    vim.schedule(function()
-      vim.cmd.checktime(buf)
-    end)
-  end)
-end
+local fmt_group = vim.api.nvim_create_augroup('LspFormatOnSave', {})
 
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
@@ -265,26 +339,27 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
     if client:supports_method('textDocument/formatting') and client.settings.format_on_save then
       vim.api.nvim_create_autocmd('BufWritePre', {
+        group = fmt_group,
         buffer = buf,
         callback = function()
-          if not vim.g.format_on_save_enabled then
-            return
+          if vim.g.format_on_save_enabled then
+            vim.lsp.buf.format({ bufnr = buf, id = client.id })
           end
-
-          if client.settings.use_prettier then
-            prettier_fmt(buf)
-            return
-          end
-          vim.lsp.buf.format({ bufnr = buf, id = client.id })
         end,
       })
     end
   end,
 })
 
-vim.api.nvim_create_user_command('ToggleFormatOnSave', function()
-  vim.g.format_on_save_enabled = not vim.g.format_on_save_enabled
-end, {})
+vim.api.nvim_create_autocmd('LspDetach', {
+  callback = function(args)
+    vim.api.nvim_clear_autocmds({
+      event = 'BufWritePre',
+      buffer = args.buf,
+      group = fmt_group,
+    })
+  end,
+})
 
 for server, config in pairs(servers) do
   vim.lsp.config(server, config)
