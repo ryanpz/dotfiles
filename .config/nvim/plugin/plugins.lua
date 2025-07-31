@@ -115,6 +115,18 @@ local formatters = {
   },
 }
 
+local formatters_running = 0
+vim.api.nvim_create_autocmd('VimLeavePre', {
+  callback = function()
+    if formatters_running <= 0 then
+      return
+    end
+    vim.wait(10000, function()
+      return formatters_running <= 0
+    end, 100)
+  end,
+})
+
 local function setup_format_on_save(name, opts)
   vim.api.nvim_create_autocmd('FileType', {
     pattern = opts.filetypes,
@@ -129,10 +141,12 @@ local function setup_format_on_save(name, opts)
 
       local function fmt()
         vim.b[buf].formatting = true
+        formatters_running = formatters_running + 1
 
         local cmd = opts.cmd(file, vim.b[buf].format_config)
         vim.system(cmd, { timeout = opts.timeout or 5000 }, function(out)
           vim.b[buf].formatting = false
+          formatters_running = formatters_running - 1
           if out.code ~= 0 then
             local error_msg = out.code == 124 and 'Timeout' or out.stderr or 'Unknown error'
             print(string.format('Format failed (%s): %s', name, error_msg))
