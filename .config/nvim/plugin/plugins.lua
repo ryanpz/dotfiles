@@ -82,7 +82,7 @@ local formatters = {
   prettier = {
     filetypes = { 'typescript', 'javascript' },
     executable = 'npx',
-    cmd = function(config_file, file)
+    cmd = function(file, config_file)
       return { 'npx', 'prettier', '--config', config_file, '--write', file }
     end,
     config_finder = function(buf, callback)
@@ -102,7 +102,7 @@ local formatters = {
   stylua = {
     filetypes = { 'lua' },
     executable = 'stylua',
-    cmd = function(config_file, file)
+    cmd = function(file, config_file)
       return { 'stylua', '--config-path', config_file, file }
     end,
     config_finder = function(buf, callback)
@@ -127,14 +127,10 @@ local function setup_format_on_save(name, opts)
       local buf = args.buf
       local file = vim.api.nvim_buf_get_name(buf)
 
-      opts.config_finder(buf, function(config)
-        vim.b[buf].format_config = config
-      end)
-
       local function fmt()
         vim.b[buf].formatting = true
 
-        local cmd = opts.cmd(vim.b[buf].format_config, file)
+        local cmd = opts.cmd(file, vim.b[buf].format_config)
         vim.system(cmd, { timeout = opts.timeout or 5000 }, function(out)
           vim.b[buf].formatting = false
           if out.code ~= 0 then
@@ -150,18 +146,28 @@ local function setup_format_on_save(name, opts)
         end)
       end
 
-      vim.api.nvim_create_autocmd('BufWritePost', {
-        buffer = buf,
-        callback = function()
-          if
-            vim.g.format_on_save_enabled
-            and vim.b[buf].format_config
-            and not vim.b[buf].formatting
-          then
-            fmt()
-          end
-        end,
-      })
+      local function create_autocmd()
+        vim.api.nvim_create_autocmd('BufWritePost', {
+          buffer = buf,
+          callback = function()
+            if vim.g.format_on_save_enabled and not vim.b[buf].formatting then
+              fmt()
+            end
+          end,
+        })
+      end
+
+      if not opts.config_finder then
+        create_autocmd()
+        return
+      end
+
+      opts.config_finder(buf, function(config)
+        if config then
+          vim.b[buf].format_config = config
+          vim.schedule(create_autocmd)
+        end
+      end)
     end,
   })
 end
@@ -232,6 +238,7 @@ local servers = {
       },
       offsetEncoding = { 'utf-8', 'utf-16' },
     },
+    settings = { format_on_save = true, format_config_file = '.clang-format' },
   },
   gopls = {
     cmd = { 'gopls' },
@@ -338,6 +345,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end
 
     if client:supports_method('textDocument/formatting') and client.settings.format_on_save then
+      if
+        client.settings.format_config_file
+        and #vim.fs.find(
+            client.settings.format_config_file,
+            { upward = true, path = client.root_dir }
+          )
+          == 0
+      then
+        return
+      end
       vim.api.nvim_create_autocmd('BufWritePre', {
         group = fmt_group,
         buffer = buf,
