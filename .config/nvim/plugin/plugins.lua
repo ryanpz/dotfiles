@@ -18,8 +18,8 @@ local project_files = function()
   local files = {}
 
   local cmds = {
-    { 'git', 'ls-files', '--cached', '--others', '--exclude-standard' },
-    { 'jj', 'file', 'list' },
+    { 'git', 'ls-files', '--cached', '--others', '--exclude-standard', '.' },
+    { 'jj', 'file', 'list', '.' },
     { 'find', '.', '-type', 'f' },
   }
   for _, cmd in ipairs(cmds) do
