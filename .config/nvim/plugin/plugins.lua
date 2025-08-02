@@ -131,12 +131,16 @@ local function setup_format_on_save(name, opts)
   vim.api.nvim_create_autocmd('FileType', {
     pattern = opts.filetypes,
     callback = function(args)
+      local buf = args.buf
+
+      if vim.bo[buf].buftype ~= '' then
+        return
+      end
+
       if vim.fn.executable(opts.executable) == 0 then
         print(string.format('Format setup failed (%s): %s not found', name, opts.executable))
         return
       end
-
-      local buf = args.buf
       local file = vim.api.nvim_buf_get_name(buf)
 
       local function fmt()
