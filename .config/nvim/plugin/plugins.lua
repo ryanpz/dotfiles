@@ -258,6 +258,11 @@ local servers = {
     },
     settings = { format_on_save = true, format_config_file = '.clang-format' },
   },
+  emmylua_ls = {
+    cmd = { 'emmylua_ls' },
+    filetypes = { 'lua' },
+    root_markers = { { '.luarc.json', '.emmyrc.json', '.stylua.toml', 'stylua.toml', '.git' } },
+  },
   gopls = {
     cmd = { 'gopls' },
     filetypes = { 'go', 'gomod', 'gowork', 'gosum', 'gotmpl' },
@@ -274,11 +279,6 @@ local servers = {
       end
     end,
     settings = { format_on_save = true },
-  },
-  emmylua_ls = {
-    cmd = { 'emmylua_ls' },
-    filetypes = { 'lua' },
-    root_markers = { { '.luarc.json', '.emmyrc.json', '.stylua.toml', 'stylua.toml', '.git' } },
   },
   pyright = {
     cmd = { 'pyright-langserver', '--stdio' },
@@ -303,6 +303,12 @@ local servers = {
         },
       },
     },
+  },
+  ruff = {
+    cmd = { 'ruff', 'server' },
+    filetypes = { 'python' },
+    root_markers = { 'pyproject.toml', 'ruff.toml', '.ruff.toml', '.git' },
+    settings = { format_on_save = true },
   },
   rust_analyzer = {
     cmd = { 'rust-analyzer' },
