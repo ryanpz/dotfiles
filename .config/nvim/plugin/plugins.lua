@@ -113,6 +113,13 @@ local formatters = {
       callback(config)
     end,
   },
+  shfmt = {
+    filetypes = { 'sh' },
+    executable = 'shfmt',
+    cmd = function(file)
+      return { 'shfmt', '--simplify', '--write', file }
+    end,
+  },
 }
 
 local formatters_running = 0
@@ -138,7 +145,6 @@ local function setup_format_on_save(name, opts)
       end
 
       if vim.fn.executable(opts.executable) == 0 then
-        print(string.format('Format setup failed (%s): %s not found', name, opts.executable))
         return
       end
       local file = vim.api.nvim_buf_get_name(buf)
