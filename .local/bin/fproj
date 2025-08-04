@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# Selects a project directory (directories containing .git or .jj) in FPROJ_DIR
+# (default $HOME/dev) using fzf.
+#
+# Dependencies:
+#   fzf
+#   find with -maxdepth support
+#
+# Options:
+#   -u
+#       Force update the project directory list cache. The cache expires after
+#       24 hours.
+
+set -e
+
+FPROJ_DIR="${FPROJ_DIR:-$HOME/dev}"
+XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+PROJECT_DIRS_CACHE="$XDG_CACHE_HOME"/fproj-dirs
+CACHE_TTL=86400
+
+error() {
+	printf 'error: %s\n' "$1" >&2
+	exit 1
+}
+
+update_cache() {
+	date +%s >"$PROJECT_DIRS_CACHE"
+	find "$FPROJ_DIR" -maxdepth 5 -type d \( -name '.git' -o -name '.jj' \) \
+		-exec dirname {} \; | sort -u >>"$PROJECT_DIRS_CACHE"
+}
+
+should_update_cache() {
+	[ -n "$manually_updated_cache" ] && return 1
+	[ ! -f "$PROJECT_DIRS_CACHE" ] && return 0
+
+	cache_date="$(head -n1 "$PROJECT_DIRS_CACHE" 2>/dev/null || printf '0\n')"
+	[ $(($(date +%s) - cache_date)) -ge "$CACHE_TTL" ]
+}
+
+mkdir -p "$XDG_CACHE_HOME"
+
+if [ ! -d "$FPROJ_DIR" ]; then
+	error "FPROJ_DIR $FPROJ_DIR does not exist"
+fi
+
+while getopts 'u' o; do
+	case "$o" in
+	u)
+		update_cache
+		manually_updated_cache=1
+		;;
+	*) exit 1 ;;
+	esac
+done
+
+if should_update_cache; then
+	update_cache
+fi
+
+selected=$(sed "1d; s|^$FPROJ_DIR/||" "$PROJECT_DIRS_CACHE" | fzf --prompt='project: ')
+if [ -z "$selected" ]; then
+	exit 1
+fi
+printf '%s/%s\n' "$FPROJ_DIR" "$selected"
