@@ -26,8 +26,8 @@ palette = 14=#c0fcff
 palette = 15=#ffffff
 background = 000000
 foreground = ffffff
-cursor-color = ff5555
-cursor-text = ffffff
+cursor-color = ffffff
+cursor-text = 000000
 selection-invert-fg-bg = true
 
 config-file = ?config.local
