@@ -1,3 +1,4 @@
+adjust-cursor-thickness = 2
 app-notifications = false
 confirm-close-surface = false
 cursor-style-blink = false
@@ -6,7 +7,9 @@ font-size = 10.5
 resize-overlay = never
 shell-integration-features = no-cursor
 window-decoration = false
-adjust-cursor-thickness = 2
+
+keybind = ctrl+b>ctrl+l=next_tab
+keybind = ctrl+b>left_bracket=write_scrollback_file:paste
 
 palette = 0=#222222
 palette = 1=#ff6060
