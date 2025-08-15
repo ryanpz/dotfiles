@@ -205,20 +205,7 @@ end
 --             --
 vim.diagnostic.config({
   underline = false,
-  signs = {
-    text = {
-      [vim.diagnostic.severity.ERROR] = '',
-      [vim.diagnostic.severity.WARN] = '',
-      [vim.diagnostic.severity.INFO] = '',
-      [vim.diagnostic.severity.HINT] = '',
-    },
-    numhl = {
-      [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
-      [vim.diagnostic.severity.WARN] = 'DiagnosticSignWarn',
-      [vim.diagnostic.severity.INFO] = 'DiagnosticSignInfo',
-      [vim.diagnostic.severity.HINT] = 'DiagnosticSignHint',
-    },
-  },
+  signs = false,
   jump = {
     on_jump = function(_, bufnr)
       vim.diagnostic.open_float({
@@ -229,6 +216,10 @@ vim.diagnostic.config({
     end,
   },
 })
+
+vim.api.nvim_create_user_command('D', function()
+  vim.diagnostic.setloclist()
+end, {})
 
 vim.diagnostic.enable(vim.g.diagnostics_enabled)
 
