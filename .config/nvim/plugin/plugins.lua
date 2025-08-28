@@ -18,6 +18,7 @@ local project_files = function()
   local files = {}
 
   local cmds = {
+    { 'rg', '--files', '--hidden', '--no-require-git' },
     { 'git', 'ls-files', '--cached', '--others', '--exclude-standard', '.' },
     { 'jj', 'file', 'list', '.' },
     { 'find', '.', '-type', 'f' },
@@ -33,29 +34,14 @@ local project_files = function()
   return files
 end
 
-vim.api.nvim_create_user_command('F', function(opts)
-  local file = ''
-  if vim.uv.fs_stat(opts.args) then
-    file = opts.args
-  else
-    file = vim.fn.matchfuzzy(project_files(), opts.args)[1] or ''
+function _G.findfunc(cmd_arg, _cmd_complete)
+  local result = vim.uv.fs_stat(cmd_arg)
+  if result and result.type ~= 'directory' then
+    return { cmd_arg }
   end
-
-  if file == '' then
-    print('No matches')
-    return
-  end
-
-  vim.cmd.edit(file)
-end, {
-  nargs = 1,
-  complete = function(arg_lead)
-    if arg_lead == '' then
-      return {}
-    end
-    return vim.fn.matchfuzzy(project_files(), arg_lead)
-  end,
-})
+  return vim.fn.matchfuzzy(project_files(), cmd_arg)
+end
+vim.o.findfunc = 'v:lua.findfunc'
 
 --           --
 -- Filetypes --
