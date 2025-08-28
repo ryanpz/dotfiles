@@ -1,5 +1,7 @@
 vim.loader.enable()
 
+vim.g.mapleader = ','
+
 vim.o.completeopt = 'menuone'
 vim.o.wrap = false
 vim.o.mouse = ''

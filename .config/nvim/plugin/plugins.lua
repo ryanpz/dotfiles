@@ -43,6 +43,8 @@ function _G.findfunc(cmd_arg, _cmd_complete)
 end
 vim.o.findfunc = 'v:lua.findfunc'
 
+vim.keymap.set('n', '<Leader>f', ':find<Space>')
+
 --           --
 -- Filetypes --
 --           --
