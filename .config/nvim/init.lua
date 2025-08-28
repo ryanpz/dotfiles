@@ -6,5 +6,5 @@ vim.o.mouse = ''
 vim.o.laststatus = 3
 
 if vim.fn.executable('rg') == 1 then
-  vim.o.grepprg = 'rg --vimgrep'
+  vim.o.grepprg = 'rg --vimgrep --no-require-git'
 end
