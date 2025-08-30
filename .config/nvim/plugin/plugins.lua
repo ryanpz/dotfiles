@@ -87,20 +87,6 @@ local formatters = {
       )
     end,
   },
-  stylua = {
-    filetypes = { 'lua' },
-    executable = 'stylua',
-    cmd = function(file, config_file)
-      return { 'stylua', '--config-path', config_file, file }
-    end,
-    config_finder = function(buf, callback)
-      local config = vim.fs.find(
-        { 'stylua.toml', '.stylua.toml' },
-        { upward = true, path = vim.fs.dirname(vim.api.nvim_buf_get_name(buf)) }
-      )[1]
-      callback(config)
-    end,
-  },
   shfmt = {
     filetypes = { 'sh' },
     executable = 'shfmt',
@@ -247,6 +233,10 @@ local servers = {
     cmd = { 'emmylua_ls' },
     filetypes = { 'lua' },
     root_markers = { { '.luarc.json', '.emmyrc.json', '.stylua.toml', 'stylua.toml', '.git' } },
+    settings = {
+      format_on_save = true,
+      format_config_file = { '.stylua.toml', 'stylua.toml', '.editorconfig' },
+    },
   },
   gopls = {
     cmd = { 'gopls' },
