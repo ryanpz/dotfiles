@@ -18,7 +18,7 @@ local project_files = function()
   local files = {}
 
   local cmds = {
-    { 'rg', '--files', '--hidden', '--no-require-git' },
+    { 'rg', '--files', '--hidden', '--no-require-git', '--glob', '!.jj/' },
     { 'git', 'ls-files', '--cached', '--others', '--exclude-standard', '.' },
     { 'jj', 'file', 'list', '.' },
     { 'find', '.', '-type', 'f' },
