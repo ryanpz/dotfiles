@@ -58,8 +58,10 @@ vim.api.nvim_create_autocmd('FileType', {
 
 vim.api.nvim_create_autocmd('FileType', {
   pattern = { 'markdown' },
-  callback = function(args)
-    vim.treesitter.start(args.buf)
+  callback = function()
+    vim.wo[0][0].wrap = true
+    vim.wo[0][0].linebreak = true
+    vim.wo[0][0].breakindent = true
   end,
 })
 
